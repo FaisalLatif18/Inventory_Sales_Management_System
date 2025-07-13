@@ -7,10 +7,6 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class AuthResponse {
-    private String token;
-    private String email;
-    private String role;
-    private String name;
-    private Long id;
+public class RegisterResponse {
+    private String message;
 }

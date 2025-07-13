@@ -3,6 +3,7 @@ package com.pharmacy.auth_service.service;
 import com.pharmacy.auth_service.dto.AuthRequest;
 import com.pharmacy.auth_service.dto.AuthResponse;
 import com.pharmacy.auth_service.dto.RegisterRequest;
+import com.pharmacy.auth_service.dto.RegisterResponse;
 import com.pharmacy.auth_service.entity.User;
 import com.pharmacy.auth_service.entity.VerificationToken;
 import com.pharmacy.auth_service.repository.UserRepository;
@@ -31,7 +32,7 @@ public class AuthService {
     private final JwtUtil jwtUtil;
     private final EmailService emailService;
 
-    public AuthResponse register(RegisterRequest request) {
+    public RegisterResponse register(RegisterRequest request) {
         if (userRepository.findByEmail(request.getEmail()).isPresent()) {
             logger.warn("Attempted registration with existing email: {}", request.getEmail());
             throw new IllegalStateException("User already exists with this email");
@@ -59,7 +60,7 @@ public class AuthService {
         tokenRepository.save(verificationToken);
         emailService.sendVerificationEmail(user.getEmail(), token);
 
-        return new AuthResponse("Registered successfully. Check your email to verify your account.");
+        return new RegisterResponse("Registered successfully. Check your email to verify your account.");
     }
 
     public String verifyToken(String token) {
@@ -82,7 +83,8 @@ public class AuthService {
 
     public AuthResponse authenticate(AuthRequest request) {
         User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + request.getEmail()));
+                .orElseThrow(() ->
+                        new UsernameNotFoundException("User not found with email: " + request.getEmail()));
 
         if (!user.isEmailVerified()) {
             logger.warn("User attempted login without verifying email: {}", request.getEmail());
@@ -96,6 +98,12 @@ public class AuthService {
 
         logger.info("User authenticated successfully: {}", request.getEmail());
         String token = jwtUtil.generateToken(user);
-        return new AuthResponse(token);
+        return new AuthResponse(
+                token,
+                user.getEmail(),
+                user.getRole().name(),
+                user.getName(),
+                user.getId()
+        );
     }
 }
